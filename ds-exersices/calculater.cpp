@@ -9,7 +9,7 @@ std::stack<char> backExpressStack;
 std::stack<char> operatorStack;
 std::map<char, int> priorMap;
 
-/* 判断是否为操作数 */
+/* 判断是否为操作符 */
 bool isOperator(char c)					
 {
 	switch (c)
