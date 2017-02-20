@@ -9,7 +9,7 @@ std::stack<char> backExpressStack;
 std::stack<char> operatorStack;
 std::map<char, int> priorMap;
 
-/* 判断是否为操作数 */
+/* 判断是否为操作符 */
 bool isOperator(char c)					
 {
 	switch (c)
@@ -31,7 +31,6 @@ bool isOperand(char c)
 }
 
 /* 去除空格 得到有效表达字符 */
-char current;
 char getToken()
 {
 	char c = std::getchar();
@@ -41,106 +40,47 @@ char getToken()
 	return c;
 }
 
-void err()
+/* 中缀转后缀表达式 */
+void midToBack()
 {
-	std::cerr << "表达式输入不正确！" << std::endl;
-}
-
-int parseExpression();
-
-int parseParen()
-{
-	operatorStack.push('(');
-	
-	if (parseExpression() == -1) {
-		return -1;
-	}
-
-	if (current != ')') {
-		return -1;
-	}
-
-	while (operatorStack.top() != '(') {
-		backExpressStack.push(operatorStack.top());
-		operatorStack.pop();
-	}
-	operatorStack.pop();
-}
-
-/* 解析操作数 ( ) 或者 单独数字 */
-int parseOperand()
-{
-	current = getToken();
-	if (current != '(' && !isOperand(current)) {
-		return -1;
-	}
-
-	if (current == '(') {
-		if (parseParen() == -1) {
-			return -1;
+	char current;
+	while ((current = getToken()) != '\n' ) {
+		if (isOperand(current)) {						//操作数
+			backExpressStack.push(current);
 		}
 
-	} else if (isOperand(current)) {
-		backExpressStack.push(current);
-	}
-	
-}
-
-int parsePair(char current);
-
-/* 表达式 */
-int parseExpression()
-{
-	if (parseOperand() == -1) {										//操作数
-		return -1;
-	}
-	current = getToken();
-
-	while (current != '\n' && current != ')') {			//操作符
-		if (parsePair(current) == -1) {
-			return -1;
+		if (isOperator(current)) {						//操作符
+				while ((!operatorStack.empty()) && 
+					(operatorStack.top() != '(') && 
+					(priorMap[operatorStack.top()] >= priorMap[current])) {
+					backExpressStack.push(operatorStack.top());
+					operatorStack.pop();
+				}
+				operatorStack.push(current);
 		}
-		current = getToken();
-	}
 
-	if (current == '\n') {
-		while (!operatorStack.empty()) {
-			backExpressStack.push(operatorStack.top());
+		if (current == '(') {
+			operatorStack.push(current);
+		    midToBack();
+		}
+
+		if (current == ')') {
+			while (operatorStack.top() != '(')
+			{
+				backExpressStack.push(operatorStack.top());
+				operatorStack.pop();
+			}
 			operatorStack.pop();
+			return;
 		}
 	}
 
-	return 0;
-	
-}
-
-/* 操作符 */
-int parseOperator(char current)
-{
-	if (!isOperator(current)) {
-		return -1;
-	}
-
-	while ((!operatorStack.empty()) &&
-		(operatorStack.top() != '(') &&
-		(priorMap[operatorStack.top()] >= priorMap[current])) {
+	while (!operatorStack.empty()) {
 		backExpressStack.push(operatorStack.top());
 		operatorStack.pop();
 	}
 
-	operatorStack.push(current);
-}
-
-/* parse such as +2 -1 operator&operand */
-int parsePair(char current)
-{
-	if (parseOperator(current) == -1) {		//操作符
-		return -1;
-	}
-
-	if (parseOperand() == -1) {				//操作数
-		return -1;
-	}
+	
 }
 
 /* 计算 a先弹出 为第二操作数 */
@@ -172,12 +112,9 @@ int main()
 	priorMap['-'] = 10;
 	priorMap['*'] = 20;
 	priorMap['/'] = 20;
+	//priorMap['('] = -10;
 
-	int result = parseExpression();
-	if (result == -1) {
-		err();
-		return 0;
-	}
+	midToBack();
 
 	std::stack<char> s;
 	std::vector<char> v;
@@ -187,10 +124,10 @@ int main()
 		backExpressStack.pop();
 	}
 
-//	std::cout << "后缀表达式 : ";
+	std::cout << "后缀表达式 : ";
 	
 	while (!s.empty()) {
-	//	std::cout << s.top() << " ";
+		std::cout << s.top() << " ";
 		v.push_back(s.top());
 		s.pop();
 	}
